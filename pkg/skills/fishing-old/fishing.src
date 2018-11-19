@@ -16,87 +16,88 @@ include "include/eventID";
 
 program use_fishpole(who, fishingpole)
   if(!can_access(who, fishingpole))
-    return 0;
+    return;
   endif
   EraseObjProperty(who, "IsMeditating");
   EraseObjProperty(who, "HealTimer");
   if(fishingpole.movable == 0)
     SendSysMessage(who, "You cannot use that.");
-    return 0;
+    return;
   endif
   if(!ReserveItem(fishingpole))
-    return 0;
+    return;
   endif
-  if(!IsFishingPoleEquipped(who, fishingpole))
+  if(! IsFishingPoleEquipped(who, fishingpole))
     SendSysMessage(who, "You have to equip that to go fishing!");
-    return 0;
+    return;
   endif
-
   var targetsquare := TargetCoordinates(who);
   if(!targetsquare)
-    return 0;
+   return;
   endif
-
-  var locinfo:= GetMapInfo(targetsquare.x, targetsquare.y, who.realm);
-  if(!IsValidTarget(who, targetsquare, locinfo))
-    return 1;
-  endif
-
-  PerformAction(who, 0x9);
-  CreteSplashes(who, targetsquare) 
-
-  sleepms(1500);
-  if(!isSOS(who, targetsquare))
-    var difficulty;
-    if(targetsquare.objtype)
-      difficulty := GetHarvestDifficulty("fish", targetsquare.x, targetsquare.y, targetsquare.objtype, who.realm);
-    else
-      difficulty := GetHarvestDifficulty("fish", targetsquare.x, targetsquare.y, locinfo.landtile, who.realm);
-    endif
-    if(difficulty == error)
-      SendSysMessage(who, "There doesn't seem to be any fish here");
-      return 0;
-    endif
-    var successrate := SkillCheck(who, FISHING, difficulty, 30);
-    if(successrate > 0)
-      var fishreturned := HarvestResource("fish", targetsquare.x, targetsquare.y, 1, 1, who.realm);
-      if(!fishreturned)
-        SendSysMessage(who, "Oops, you let that one get away!");
+  var locinfo:= GetMapInfo( targetsquare.x, targetsquare.y, who.realm );
+  if(IsValidTarget(who, targetsquare, locinfo))
+    PerformAction(who, 0x9);
+    var newsplash := CreateItemAtLocation(targetsquare.x, targetsquare.y, targetsquare.z,  0x352d, 1, who.realm);
+    newsplash.movable := 0;
+    PlaySoundEffect(who, 0x240);
+    sleepms(400);
+    set_critical(1);
+    DestroyItem(newsplash);
+    set_critical(0);
+    newsplash := CreateItemAtLocation(targetsquare.x, targetsquare.y, targetsquare.z,  0x352e, 1, who.realm);
+    newsplash.movable := 0;
+    sleepms(400);
+    set_critical(1);
+    DestroyItem(newsplash);
+    set_critical(0);
+    newsplash := CreateItemAtLocation(targetsquare.x, targetsquare.y, targetsquare.z,  0x352f, 1, who.realm);
+    newsplash.movable := 0;
+    sleepms(400);
+    set_critical(1);
+    DestroyItem(newsplash);
+    set_critical(0);
+    newsplash := CreateItemAtLocation(targetsquare.x, targetsquare.y, targetsquare.z,  0x3530, 1, who.realm);
+    newsplash.movable := 0;
+    sleepms(400);
+    set_critical(1);
+    DestroyItem(newsplash);
+    set_critical(0);
+    sleepms(1500);
+    if(!isSOS(who, targetsquare))
+      var difficulty;
+      if(targetsquare.objtype)
+        difficulty := GetHarvestDifficulty("fish", targetsquare.x, targetsquare.y, targetsquare.objtype, who.realm);
+      else
+        difficulty := GetHarvestDifficulty("fish", targetsquare.x, targetsquare.y, locinfo.landtile, who.realm);
+      endif
+      if(difficulty == error)
+        SendSysMessage(who, "There doesn't seem to be any fish here");
         return 0;
       endif
-      var catchtype := GetTheCatch(who);
-      if(CreateItemInContainer(who.backpack, catchtype, 1))
-        CheckToolWear(who, fishingpole, FISHING);
-        skillgain(who, difficulty * 10);
-      endif
-    else
-      if(RandomInt(100)< 1)
-        CriticalFailure(who, targetsquare);
+      var successrate := SkillCheck(who, FISHING, difficulty, 30);
+      if(successrate > 0)
+        var fishreturned := HarvestResource("fish", targetsquare.x, targetsquare.y, 1, 1, who.realm);
+        if(!fishreturned)
+          SendSysMessage(who, "Oops, you let that one get away!");
+          return 0;
+        endif
+        var catchtype := GetTheCatch(who);
+        if(CreateItemInContainer(who.backpack, catchtype, 1))
+          CheckToolWear (who, fishingpole, FISHING);
+          skillgain(who, difficulty * 10);
+        endif
       else
-        SendSysMessage(who, "They don't seem to be biting today");
+        if(RandomInt(100)< 1)
+          CriticalFailure(who, targetsquare);
+        else
+          SendSysMessage(who, "They don't seem to be biting today");
+        endif
       endif
     endif
   endif
-
   return 1;
 endprogram
-
-function CreteSplashes(who, target)
-  CreateSpash(who, target, 0x352d);
-  CreateSpash(who, target, 0x352e);
-  CreateSpash(who, target, 0x352f);
-  CreateSpash(who, target, 0x3530);
-endfunction
-
-function CreateSpash(who, target, object_id)
-  var newsplash := CreateItemAtLocation(target.x, target.y, target.z,  object_id, 1, who.realm);  
-  newsplash.movable := 0;
-  PlaySoundEffect(who, 0x240);
-  sleepms(400);
-  set_critical(1);
-  DestroyItem(newsplash);
-  set_critical(0);
-endfunction
 
 function skillgain(who, points)
   var diff := points / 10;
@@ -281,10 +282,10 @@ function isSOS(who, targetsquare)
       xd := Abs(targetsquare.x - sosx);
       yd := Abs(targetsquare.y - sosy);
       if((xd <= 6)&&(yd <= 6))
-        GetSOSTreasure(who, targetsquare, packitems[i]); // tem que ir pro programa, não tem sentido uma função que verifica se é um SOS fazer a busca do SOS :|
+        GetSOSTreasure(who, targetsquare, packitems[i]);
         return 1;
       endif
     endif
-  endfor
-  return 0;
+endfor
+return 0;
 endfunction
