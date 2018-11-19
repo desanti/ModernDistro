@@ -43,23 +43,20 @@ program use_fishpole(who, fishingpole)
   endif
 
   PerformAction(who, 0x9);
-  CreteSplashes(who, targetsquare) 
-
+  CreteSplashes(who, targetsquare)
   sleepms(1500);
-  if(!isSOS(who, targetsquare))
-    var difficulty;
-    if(targetsquare.objtype)
-      difficulty := GetHarvestDifficulty("fish", targetsquare.x, targetsquare.y, targetsquare.objtype, who.realm);
-    else
-      difficulty := GetHarvestDifficulty("fish", targetsquare.x, targetsquare.y, locinfo.landtile, who.realm);
-    endif
+
+  if(isSOS(who, targetsquare))  
+    // Get SOS 
+  else
+    var difficulty := GetDifficulty(who, targetsquare, location)    
     if(difficulty == error)
       SendSysMessage(who, "There doesn't seem to be any fish here");
       return 0;
     endif
     var successrate := SkillCheck(who, FISHING, difficulty, 30);
     if(successrate > 0)
-      var fishreturned := HarvestResource("fish", targetsquare.x, targetsquare.y, 1, 1, who.realm);
+      var fishreturned := HarvestResource("fish", targetsquare.x, targetsquare.y, 1, 1, who.realm);  // busca a quantidade de recursos, aqui tenha q mudar pra aplicar o bonus
       if(!fishreturned)
         SendSysMessage(who, "Oops, you let that one get away!");
         return 0;
@@ -96,6 +93,14 @@ function CreateSpash(who, target, object_id)
   set_critical(1);
   DestroyItem(newsplash);
   set_critical(0);
+endfunction
+
+function GetDifficulty(who, targetsquare, locinfo)
+  if(targetsquare.objtype)
+    return GetHarvestDifficulty("fish", targetsquare.x, targetsquare.y, targetsquare.objtype, who.realm);
+  endif
+      
+  return GetHarvestDifficulty("fish", targetsquare.x, targetsquare.y, locinfo.landtile, who.realm);    
 endfunction
 
 function skillgain(who, points)
@@ -215,7 +220,7 @@ function CriticalFailure(who, targetsquare)
 endfunction
 
 function IsFishingPoleEquipped(who, fishingpole)
-  if((!Accessible(who, fishingpole)) || (Distance(who, fishingpole)> 1))
+  if((!Accessible(who, fishingpole)) || (Distance(who, fishingpole) > 1))
     return 0;
   endif
   foreach item in ListEquippedItems(who)

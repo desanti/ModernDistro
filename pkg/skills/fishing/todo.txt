@@ -1,0 +1,9 @@
+
+
+- Reformatar o código
+
+- Varas de pesca com bonus: chance de pegar 2 peixes, chance de pegar peixes com mais peso, chance de pegar peixes com mais raros.
+- varas de pesca com hp
+- SOS
+- Peixe com pesos diferentes
+- Novas espécies de peixes
